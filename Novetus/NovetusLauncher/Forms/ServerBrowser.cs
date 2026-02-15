@@ -115,6 +115,10 @@ namespace NovetusLauncher
         #endregion
 
         #region Functions
+        async Task LoadMasterServerConfig(string url)
+        {
+            // used for webbrowser frames only (fornow)
+        }
         async Task LoadServerInfoFromFile(string url)
         {
             //https://stackoverflow.com/questions/2471209/how-to-read-a-file-from-internet#2471245
@@ -209,16 +213,29 @@ namespace NovetusLauncher
                     serverList.Clear();
                     Task info;
                     string masterServerUrl = "http://" + MasterServerBox.Text + "/serverlist.txt";
-                    // bitl plz dont be mad at me :)
+                    string version = null;
+                    string tripCode = null;
+                    string os = null;
+                    string AuthenticationString = null;
+                    if (isAuthenticationEnabled)
+                    {
+                        version = GlobalVars.ProgramInformation.Version;
+                        tripCode = GlobalVars.PlayerTripcode; // should i update laucher form to mention this?
+                        os = Environment.OSVersion.VersionString;
+                        // format: Snapshot v25.9451.1;(playertripcode);Microsoft Windows NT 10.0.19045.0
+                        AuthenticationString = version + ";" + tripCode + ";" + os;
+                    }
                     if (!isAuthenticationEnabled)
                     {
                         info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl));
-                    } else if (isAuthenticationEnabled && isAuthenticationTokenEnabled && AuthenticationToken != "") 
+                    }
+                    else if (isAuthenticationEnabled && isAuthenticationTokenEnabled && AuthenticationToken != "")
                     {
-                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + "TODO" + "&token=" + AuthenticationToken));
-                    } else // has auth, no token
+                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + AuthenticationString + "&token=" + AuthenticationToken));
+                    }
+                    else // has auth, no token
                     {
-                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + "TODO"));
+                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + AuthenticationString));
                     }
                     Task.WaitAll(info);
 
