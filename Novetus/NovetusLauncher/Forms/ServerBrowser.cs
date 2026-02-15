@@ -2,6 +2,7 @@
 using Novetus.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -35,8 +36,8 @@ namespace NovetusLauncher
 
         #region Form Events
         private async void MasterServerRefreshButton_Click(object sender, EventArgs e)
-        {
-            await LoadServers();
+        { 
+            await LoadServers(AuthenticationBox.Checked, TokenFieldCheckbox.Checked, AuthenticationTokenTextBox.Text);
         }
 
         private void JoinGameButton_Click(object sender, EventArgs e)
@@ -192,7 +193,7 @@ namespace NovetusLauncher
             MessageBox.Show(message, "Novetus - Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
 
-        async Task LoadServers()
+        async Task LoadServers(bool isAuthenticationEnabled=false, bool isAuthenticationTokenEnabled=false, string AuthenticationToken="", string ClientInfo="")
         {
             if (loadingServers)
                 return;
@@ -206,7 +207,19 @@ namespace NovetusLauncher
                 try
                 {
                     serverList.Clear();
-                    Task info = await Task.Factory.StartNew(() => LoadServerInfoFromFile("http://" + MasterServerBox.Text + "/serverlist.txt"));
+                    Task info;
+                    string masterServerUrl = "http://" + MasterServerBox.Text + "/serverlist.txt";
+                    // bitl plz dont be mad at me :)
+                    if (!isAuthenticationEnabled)
+                    {
+                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl));
+                    } else if (isAuthenticationEnabled && isAuthenticationTokenEnabled && AuthenticationToken != "") 
+                    {
+                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + "TODO" + "&token=" + AuthenticationToken));
+                    } else // has auth, no token
+                    {
+                        info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + "TODO"));
+                    }
                     Task.WaitAll(info);
 
                     ServerListView.BeginUpdate();
@@ -281,6 +294,18 @@ namespace NovetusLauncher
         }
 
         #endregion
+
+        private void AuthenticationBox_CheckedChanged(object sender, EventArgs e)
+        {
+            TokenFieldCheckbox.Enabled = AuthenticationBox.Checked;
+            AuthenticationTokenTextBox.Enabled = TokenFieldCheckbox.Checked;
+            if (!AuthenticationBox.Checked) AuthenticationTokenTextBox.Enabled = false;
+        }
+
+        private void TokenFieldCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            AuthenticationTokenTextBox.Enabled = TokenFieldCheckbox.Checked;
+        }
     }
     #endregion
 

@@ -35,6 +35,9 @@ namespace NovetusLauncher
             this.MasterServerLabel = new System.Windows.Forms.Label();
             this.MasterServerRefreshButton = new System.Windows.Forms.Button();
             this.ServerListView = new System.Windows.Forms.ListView();
+            this.AuthenticationBox = new System.Windows.Forms.CheckBox();
+            this.AuthenticationTokenTextBox = new System.Windows.Forms.TextBox();
+            this.TokenFieldCheckbox = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // JoinGameButton
@@ -85,14 +88,47 @@ namespace NovetusLauncher
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.ServerListView.HideSelection = false;
-            this.ServerListView.Location = new System.Drawing.Point(10, 37);
+            this.ServerListView.Location = new System.Drawing.Point(10, 67);
             this.ServerListView.Name = "ServerListView";
-            this.ServerListView.Size = new System.Drawing.Size(555, 408);
+            this.ServerListView.Size = new System.Drawing.Size(555, 378);
             this.ServerListView.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.ServerListView.TabIndex = 4;
             this.ServerListView.UseCompatibleStateImageBehavior = false;
             this.ServerListView.View = System.Windows.Forms.View.Details;
             this.ServerListView.SelectedIndexChanged += new System.EventHandler(this.ServerListView_SelectedIndexChanged);
+            // 
+            // AuthenticationBox
+            // 
+            this.AuthenticationBox.AutoSize = true;
+            this.AuthenticationBox.Location = new System.Drawing.Point(15, 41);
+            this.AuthenticationBox.Name = "AuthenticationBox";
+            this.AuthenticationBox.Size = new System.Drawing.Size(94, 17);
+            this.AuthenticationBox.TabIndex = 5;
+            this.AuthenticationBox.Text = "Authentication";
+            this.AuthenticationBox.UseVisualStyleBackColor = true;
+            this.AuthenticationBox.CheckedChanged += new System.EventHandler(this.AuthenticationBox_CheckedChanged);
+            // 
+            // AuthenticationTokenTextBox
+            // 
+            this.AuthenticationTokenTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.AuthenticationTokenTextBox.Enabled = false;
+            this.AuthenticationTokenTextBox.Location = new System.Drawing.Point(248, 39);
+            this.AuthenticationTokenTextBox.Name = "AuthenticationTokenTextBox";
+            this.AuthenticationTokenTextBox.Size = new System.Drawing.Size(317, 20);
+            this.AuthenticationTokenTextBox.TabIndex = 6;
+            // 
+            // TokenFieldCheckbox
+            // 
+            this.TokenFieldCheckbox.AutoSize = true;
+            this.TokenFieldCheckbox.Enabled = false;
+            this.TokenFieldCheckbox.Location = new System.Drawing.Point(114, 41);
+            this.TokenFieldCheckbox.Name = "TokenFieldCheckbox";
+            this.TokenFieldCheckbox.Size = new System.Drawing.Size(128, 17);
+            this.TokenFieldCheckbox.TabIndex = 7;
+            this.TokenFieldCheckbox.Text = "Token Authentication";
+            this.TokenFieldCheckbox.UseVisualStyleBackColor = true;
+            this.TokenFieldCheckbox.CheckedChanged += new System.EventHandler(this.TokenFieldCheckbox_CheckedChanged);
             // 
             // ServerBrowser
             // 
@@ -100,6 +136,9 @@ namespace NovetusLauncher
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlLightLight;
             this.ClientSize = new System.Drawing.Size(577, 456);
+            this.Controls.Add(this.TokenFieldCheckbox);
+            this.Controls.Add(this.AuthenticationTokenTextBox);
+            this.Controls.Add(this.AuthenticationBox);
             this.Controls.Add(this.ServerListView);
             this.Controls.Add(this.MasterServerRefreshButton);
             this.Controls.Add(this.MasterServerLabel);
@@ -123,5 +162,8 @@ namespace NovetusLauncher
         private System.Windows.Forms.Label MasterServerLabel;
         private System.Windows.Forms.Button MasterServerRefreshButton;
         private System.Windows.Forms.ListView ServerListView;
+        public System.Windows.Forms.CheckBox AuthenticationBox;
+        public System.Windows.Forms.TextBox AuthenticationTokenTextBox;
+        public System.Windows.Forms.CheckBox TokenFieldCheckbox;
     }
 }
