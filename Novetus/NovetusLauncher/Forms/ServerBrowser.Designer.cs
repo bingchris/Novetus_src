@@ -38,6 +38,7 @@ namespace NovetusLauncher
             this.AuthenticationBox = new System.Windows.Forms.CheckBox();
             this.AuthenticationTokenTextBox = new System.Windows.Forms.TextBox();
             this.TokenFieldCheckbox = new System.Windows.Forms.CheckBox();
+            this.ModernServerList = new System.Windows.Forms.WebBrowser();
             this.SuspendLayout();
             // 
             // JoinGameButton
@@ -60,6 +61,8 @@ namespace NovetusLauncher
             this.MasterServerBox.Size = new System.Drawing.Size(323, 20);
             this.MasterServerBox.TabIndex = 1;
             this.MasterServerBox.TextChanged += new System.EventHandler(this.MasterServerBox_TextChanged);
+            this.MasterServerBox.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MasterServerBox_KeyDown);
+            this.MasterServerBox.Leave += new System.EventHandler(this.MasterServerBox_Leave);
             // 
             // MasterServerLabel
             // 
@@ -130,6 +133,18 @@ namespace NovetusLauncher
             this.TokenFieldCheckbox.UseVisualStyleBackColor = true;
             this.TokenFieldCheckbox.CheckedChanged += new System.EventHandler(this.TokenFieldCheckbox_CheckedChanged);
             // 
+            // ModernServerList
+            // 
+            this.ModernServerList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.ModernServerList.Location = new System.Drawing.Point(10, 65);
+            this.ModernServerList.MinimumSize = new System.Drawing.Size(20, 20);
+            this.ModernServerList.Name = "ModernServerList";
+            this.ModernServerList.Size = new System.Drawing.Size(555, 377);
+            this.ModernServerList.TabIndex = 8;
+            this.ModernServerList.Visible = false;
+            // 
             // ServerBrowser
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -139,11 +154,12 @@ namespace NovetusLauncher
             this.Controls.Add(this.TokenFieldCheckbox);
             this.Controls.Add(this.AuthenticationTokenTextBox);
             this.Controls.Add(this.AuthenticationBox);
-            this.Controls.Add(this.ServerListView);
             this.Controls.Add(this.MasterServerRefreshButton);
             this.Controls.Add(this.MasterServerLabel);
             this.Controls.Add(this.MasterServerBox);
             this.Controls.Add(this.JoinGameButton);
+            this.Controls.Add(this.ServerListView);
+            this.Controls.Add(this.ModernServerList);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(593, 495);
             this.Name = "ServerBrowser";
@@ -165,5 +181,6 @@ namespace NovetusLauncher
         public System.Windows.Forms.CheckBox AuthenticationBox;
         public System.Windows.Forms.TextBox AuthenticationTokenTextBox;
         public System.Windows.Forms.CheckBox TokenFieldCheckbox;
+        public System.Windows.Forms.WebBrowser ModernServerList;
     }
 }
