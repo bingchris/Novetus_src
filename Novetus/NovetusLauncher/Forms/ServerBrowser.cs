@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static System.Net.Mime.MediaTypeNames;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
 #endregion
 
 namespace NovetusLauncher
@@ -29,6 +30,11 @@ namespace NovetusLauncher
         private bool loadingServers;
         private bool loadingMasterConfig = false;
         private bool isUsingWeb = false;
+        [System.Runtime.InteropServices.DllImport("wininet.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+        private static extern bool InternetSetCookieEx(string url, string name, string data, int flags, IntPtr reserved);
+
+        private const int INTERNET_COOKIE_HTTPONLY = 0x2000;
+
         #endregion
 
         #region Constructor
@@ -110,7 +116,8 @@ namespace NovetusLauncher
 
         private async void ServerBrowser_Shown(object sender, EventArgs e)
         {
-            await LoadServers();
+            await LoadMasterServerConfig(MasterServerBox.Text);
+            if (!isUsingWeb) await LoadServers();
         }
 
         private void MasterServerBox_TextChanged(object sender, EventArgs e)
@@ -166,6 +173,10 @@ namespace NovetusLauncher
                                                     MessageBoxIcon.Warning );
                                                 if (securityQuestion == DialogResult.Yes)
                                                 {
+                                                    if (isAuthenticationEnabled)
+                                                        InternetSetCookieEx("http://" + MasterServerBox.Text, "PlayerInfo", GlobalVars.ProgramInformation.Version + ";" + GlobalVars.PlayerTripcode + ";" + Environment.OSVersion.VersionString + "; path=/", INTERNET_COOKIE_HTTPONLY, IntPtr.Zero);
+                                                    if (isAuthenticationTokenEnabled)
+                                                        InternetSetCookieEx("http://" + MasterServerBox.Text, "Token", AuthenticationToken + "; path=/", INTERNET_COOKIE_HTTPONLY, IntPtr.Zero);
                                                     ModernServerList.Url = new Uri("http://" + MasterServerBox.Text + "/" + line2[1]);
                                                     ModernServerList.Visible = true;
                                                     ModernServerList.BringToFront();
@@ -325,7 +336,7 @@ namespace NovetusLauncher
                     {
                         info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + AuthenticationString + "&token=" + AuthenticationToken));
                     }
-                    else // has auth, no token
+                    else
                     {
                         info = Task.Factory.StartNew(() => LoadServerInfoFromFile(masterServerUrl + "?clientinfo=" + AuthenticationString));
                     }
