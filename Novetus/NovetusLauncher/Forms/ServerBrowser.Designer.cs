@@ -144,6 +144,7 @@ namespace NovetusLauncher
             this.ModernServerList.Size = new System.Drawing.Size(555, 377);
             this.ModernServerList.TabIndex = 8;
             this.ModernServerList.Visible = false;
+            this.ModernServerList.Navigating += new System.Windows.Forms.WebBrowserNavigatingEventHandler(this.ModernServerList_Navigating);
             // 
             // ServerBrowser
             // 

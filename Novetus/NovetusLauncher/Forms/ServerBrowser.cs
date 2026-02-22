@@ -455,6 +455,24 @@ namespace NovetusLauncher
         {
             await LoadMasterServerConfig(MasterServerBox.Text);
         }
+
+        private void ModernServerList_Navigating(object sender, WebBrowserNavigatingEventArgs e)
+        {
+            if (!isUsingWeb) return;
+            try
+            {
+                string host = e.Url.Host.ToLower();
+                string domain = MasterServerBox.Text.Trim();
+                int b = domain.IndexOf('/');
+                if (b >= 0)
+                    domain = domain.Substring(0, b);
+                if (!(host == domain || host.EndsWith("." + domain)))
+                    e.Cancel = true;
+            } catch
+            {
+                e.Cancel = true;
+            }
+        }
     }
     #endregion
 
