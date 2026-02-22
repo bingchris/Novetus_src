@@ -179,7 +179,7 @@ namespace NovetusLauncher
                                             {
                                                 var securityQuestion = MessageBox.Show(
                                                     "This master server uses web browser, which can be vulnerable on old systems " +
-                                                    "that have certain security problems (like ActiveX objects or VBScript) unpatched in JScript. " +
+                                                    "that have certain security problems (like ActiveX objects or VBScript) enabled in JScript. " +
                                                     "This is mostly safe on newer systems, but if you aren't sure, research it and check your internet security settings.\nAre you sure you want to continue?",
                                                     "Security question",
                                                     MessageBoxButtons.YesNo,
@@ -188,6 +188,8 @@ namespace NovetusLauncher
                                                 {
                                                     if (isAuthenticationEnabled)
                                                         InternetSetCookieEx("http://" + MasterServerBox.Text, "PlayerInfo", GlobalVars.ProgramInformation.Version + ";" + GlobalVars.PlayerTripcode + ";" + Environment.OSVersion.VersionString + "; path=/", INTERNET_COOKIE_HTTPONLY, IntPtr.Zero);
+                                                    else
+                                                        InternetSetCookieEx("http://" + MasterServerBox.Text, "PlayerInfo", "; path=/", INTERNET_COOKIE_HTTPONLY, IntPtr.Zero);
                                                     if (isAuthenticationTokenEnabled)
                                                         InternetSetCookieEx("http://" + MasterServerBox.Text, "Token", AuthenticationToken + "; path=/", INTERNET_COOKIE_HTTPONLY, IntPtr.Zero);
                                                     ModernServerList.Url = new Uri("http://" + MasterServerBox.Text + "/" + line2[1]);
