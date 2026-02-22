@@ -30,6 +30,7 @@ namespace NovetusLauncher
         private bool loadingServers;
         private bool loadingMasterConfig = false;
         private bool isUsingWeb = false;
+        private string[] masterConfigs;
         [System.Runtime.InteropServices.DllImport("wininet.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
         private static extern bool InternetSetCookieEx(string url, string name, string data, int flags, IntPtr reserved);
 
@@ -144,7 +145,19 @@ namespace NovetusLauncher
                     ModernServerList.Url = null;
                     ModernServerList.Visible = false;
                     ModernServerList.SendToBack();
-                    string config = await LoadStringFromFile(url);
+                    string config = "";
+                    try
+                    {
+                        config = await LoadStringFromFile(url);
+                    } catch (Exception ex)
+                    {
+                        if (ex.ToString() == "404")
+                        {
+                            // do not show error? since would be annoying for basic master servers
+                            loadingMasterConfig = false;
+                            Text = oldText;
+                        }
+                    }
 
                     Stream configasstream = new MemoryStream(Encoding.ASCII.GetBytes(config));
                     // format is key: value
@@ -192,7 +205,13 @@ namespace NovetusLauncher
                                                 isUsingWeb = false;
                                             }
                                             break;
-                                        // add more plz
+                                        case "legacyListFallback":
+                                            if (line2[1] == "true")
+                                                ModernServerList.Url = null;
+                                                ModernServerList.Visible = false;
+                                                ModernServerList.SendToBack();
+                                                isUsingWeb = false;
+                                            break;
                                     }
                                 }
                             }
@@ -218,7 +237,7 @@ namespace NovetusLauncher
             }
             catch (WebException ex) when (ex.Response is HttpWebResponse resp)
             {
-                throw new Exception($"Error while fetching {url}. {(int)resp.StatusCode}: {resp.StatusDescription}");
+                throw new Exception($"{(int)resp.StatusCode}");
             }
 
         }
