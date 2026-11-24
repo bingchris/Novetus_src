@@ -414,7 +414,7 @@ namespace NovetusLauncher
 
                         if (vals[1].Equals("none", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            GlobalVars.UserConfiguration.SaveSetting("AlternateServerIP");
+                            GlobalVars.UserConfiguration.ClearSetting("AlternateServerIP");
                             Util.ConsolePrint("Alternate Server IP removed.", 4);
                         }
                         else
@@ -484,8 +484,8 @@ namespace NovetusLauncher
 
                         if (vals[1].Equals("none", StringComparison.InvariantCultureIgnoreCase))
                         {
-                            GlobalVars.UserConfiguration.SaveSetting("ServerBrowserPath");
-                            Util.ConsolePrint("Server Browser reset to default.", 4);
+                            GlobalVars.UserConfiguration.ClearSetting("ServerBrowserPath");
+                            Util.ConsolePrint("Server Browser Path cleared.", 4);
                         }
                         else
                         {
@@ -498,6 +498,38 @@ namespace NovetusLauncher
                         Util.ConsolePrint("Please specify the path you would like to set the server browser to. Use '%novetuspath%' to specify the Novetus path. Type 'none' to disable this.", 2);
                     }
                     ScrollToEnd();
+                    break;
+                case string genarrays when genarrays.Contains("genarrays", StringComparison.InvariantCultureIgnoreCase) == true:
+                    Util.ConsolePrint(SecurityFuncs.GenArrays());
+                    break;
+                case string neofetch when neofetch.Contains("neofetch", StringComparison.InvariantCultureIgnoreCase) == true:
+                    Util.ConsolePrint(@"            NhhhhhhhhhhN                            hsssoosssd            
+            NyyyyhhhhyyhdN                          hoo++++++h            
+            NyyyyyhhhhyyyhN                         hoo+++///h            
+            NssssyyyyyhyyyhdN                       hoo+++///h            
+            Nsossssyyyyyyyyyhm                      hsoo++///h            
+            NsssssssssyyyyyyyhdN                    hssoo++//h            
+            Nsssssssssssyyyyhhhdm                   hsssoo+++h            
+            NyssssssssysyyyyhhhhhdN NNNNNmmmmdddddhhysoooo+++ymNN               " + GlobalVars.UserConfiguration.ReadSetting("PlayerName", true) + @"@novetus
+            Nhyyssssssmdyyyyhhhhhyhyysssssooooooooosssooooo++osssyhdmN          ----------------------------
+            Nhyyyyssssddhyyyhhyyysssosyyhhhddmmmmmmmyooooo+++yhyssoosydN        Novetus version: " + GlobalVars.ProgramInformation.Version + @"
+            NdhhyyyysssoosyhyyyssooooydN            y++++++++hN NNdhsoohN       Novetus path: " + GlobalPaths.BasePath + @"
+            NmdhhhyyyysyhddmNmhyssooooooshN           s++++++++h      doosm     Distribution Codename: " + GlobalVars.ProgramInformation.VersionName + @"
+        NNdhysoyyyysssssm     NdsoooooooooydN         s/////+++h    NmyooyN     Selected Client: " + GlobalVars.UserConfiguration.ReadSetting("SelectedClient") + @"
+    Ndysoosyhyysssooosm       myooooooososhN        s///////+h  Ndhsoshm        Configuration: " + GlobalPaths.ConfigDir + "\\" + GlobalPaths.ConfigName + @"
+    mhsoosydmNmysooooooom        NdssssssssooydN      s////////hdhssosydN       .NET Version: " + GlobalVars.ProgramInformation.NetVersion + @"
+NhsosydN    Nsoooo+++om          mhssssssoooohm     y++/////+soosyhmN     
+NhoosdN      Nsooo+++oom           NdyssssooooosdN  Ny++++oooosydmN        
+msood        Noooooooosm             Nhssooooooooydhysoooo++++hN           
+NhooshmN     Nsoooooossm             Nmhsoooooooooooso++////++h            
+Nhysossyhhdddoooooooosdmmmmmdddhhhyysssoooooooooo++ss++//++++h            
+    Nmhyyssooooooooooooosssooooooossssyyhhdds+++++++++++++++oood            
+        NNmmmddssooooooohhhhddddmmmNNNN     Ny+++++++++++++osssd            
+             Nyyssssoosm                    Nds+++++++++oosssyd            
+             Nhyyysssssm                      Nho++++++oossssyd            
+             Nyyyyyssssm                        ms+++++ooossssd            
+             Nyyyssssssm                         Nho+++ooossssd            
+             Nhyyyyyyyym                           mysssssyyyyd");
                     break;
                 default:
                     Util.ConsolePrint("Command is either not registered or valid", 2);

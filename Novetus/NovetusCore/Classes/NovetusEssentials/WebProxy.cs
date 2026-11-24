@@ -32,7 +32,7 @@ namespace Novetus.Core
 
     public class WebProxy
     {
-        private ProxyServer Server = new ProxyServer();
+        private ProxyServer Server = null;
         private ExplicitProxyEndPoint end;
         public ExtensionManager Manager = new ExtensionManager();
         private static readonly SemaphoreLocker _locker = new SemaphoreLocker();
@@ -49,7 +49,8 @@ namespace Novetus.Core
                     "A web proxy redirects web traffic to a different location and in some cases can act as a gateway to different sites. Novetus uses the web proxy for additional client features and asset redirection.\n\n" +
                     "When enabling the web proxy, Novetus will locally create a certificate upon startup that ensures the proxy's functionality. Novetus will not send any user data to anyone, as everything involving the web proxy is entirely local to this computer.\n" +
                     "If you have any issue connecting to other web sites, including Roblox, closing Novetus or typing 'proxy off' into Novetus' console will fix it in most instances.\n\n" +
-                    "Upon pressing 'Yes', Windows will ask you for permission to install the certificate.\n\n" +
+                    "Upon pressing 'Yes', Windows will ask you for permission to install the certificate.\n" +
+                    "This certificate is required for the web proxy to work, and pressing 'No' in the dialog will break its functionality.\n\n" +
                     "You can change this option at any time by typing 'proxy disable' or 'proxy on' in the Novetus console.\n\n" +
                     "NOTE: The Web proxy feature requires an Internet connection to function properly.\n\n" +
                     "This message will appear only once.\n";
@@ -66,6 +67,7 @@ namespace Novetus.Core
                         break;
                     case DialogResult.No:
                     default:
+                        GlobalVars.UserConfiguration.SaveSettingBool("WebProxyInitialSetupRequired", false);
                         break;
                 }
             }
@@ -83,6 +85,11 @@ namespace Novetus.Core
 
         public void Start()
         {
+            if (Server == null)
+            {
+                Server = new ProxyServer();
+            }
+
             if (Server.ProxyRunning)
             {
                 Util.ConsolePrint("The web proxy is already on and running.", 2);
@@ -93,6 +100,7 @@ namespace Novetus.Core
             {
                 Manager.LoadExtensions(GlobalPaths.NovetusExtsWebProxy);
                 Util.ConsolePrint("Booting up Web Proxy...", 3);
+
                 Server.CertificateManager.RootCertificateIssuerName = "Novetus";
                 Server.CertificateManager.RootCertificateName = "Novetus Web Proxy";
                 Server.BeforeRequest += new AsyncEventHandler<SessionEventArgs>(OnRequest);
@@ -103,7 +111,7 @@ namespace Novetus.Core
 
                 Server.Start();
 
-                foreach(ProxyEndPoint endPoint in Server.ProxyEndPoints)
+                foreach (ProxyEndPoint endPoint in Server.ProxyEndPoints)
                 {
                     Server.SetAsSystemProxy(end, ProxyProtocolType.AllHttp);
                 }
@@ -247,7 +255,10 @@ namespace Novetus.Core
 
                 Util.ConsolePrint("Web Proxy stopping on port " + WebProxyPort, 3);
                 Server.BeforeRequest -= new AsyncEventHandler<SessionEventArgs>(OnRequest);
+                Server.RestoreOriginalProxySettings();
                 Server.Stop();
+                Server.Dispose();
+                Server = null;
 
                 foreach (IExtension extension in Manager.GetExtensionList().ToArray())
                 {

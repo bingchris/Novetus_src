@@ -194,10 +194,8 @@ namespace NovetusLauncher
                 return;
             }
 
-            if (GlobalVars.UserConfiguration.ReadSettingBool("WebProxyEnabled"))
-            {
-                GlobalVars.UserConfiguration.SaveSettingBool("WebProxyEnabled", false);
-            }
+            GlobalVars.UserConfiguration.SaveSettingBool("WebProxyEnabled", false);
+            GlobalVars.UserConfiguration.SaveSettingBool("WebProxyInitialSetupRequired", true);
 
             GlobalVars.Proxy.Stop();
 
@@ -255,7 +253,7 @@ namespace NovetusLauncher
 
         public void CloseEvent(CancelEventArgs e)
         {
-            if (GlobalVars.AdminMode && Parent.GetType() == typeof(NovetusConsole) && !GlobalVars.ConsoleOnly)
+            if (Parent.GetType() == typeof(NovetusConsole) && !GlobalVars.ConsoleOnly)
             {
                 e.Cancel = true;
             }
@@ -274,12 +272,19 @@ namespace NovetusLauncher
                     }
                 }
 
-                if (GlobalVars.AdminMode && Parent.GetType() != typeof(NovetusConsole))
+                if (Parent.GetType() != typeof(NovetusConsole))
                 {
-                    DialogResult closeNovetus = MessageBox.Show("You are in Admin Mode.\nAre you sure you want to quit Novetus?", "Novetus - Admin Mode Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-                    if (closeNovetus == DialogResult.No)
+                    if (GlobalVars.AdminMode)
                     {
-                        e.Cancel = true;
+                        DialogResult closeNovetus = MessageBox.Show("You are in Admin Mode.\nAre you sure you want to quit Novetus?", "Novetus - Admin Mode Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                        if (closeNovetus == DialogResult.No)
+                        {
+                            e.Cancel = true;
+                        }
+                        else
+                        {
+                            CloseEventInternal();
+                        }
                     }
                     else
                     {
@@ -291,17 +296,24 @@ namespace NovetusLauncher
 
         public void WipeClientScripts()
         {
-            string clientdir = GlobalPaths.ClientDir;
-            DirectoryInfo dinfo = new DirectoryInfo(clientdir);
-            DirectoryInfo[] Dirs = dinfo.GetDirectories();
-            foreach (DirectoryInfo dir in Dirs)
+            try
             {
-                string ClientName = dir.Name;
-                var values = Enum.GetValues(typeof(ScriptType)).Cast<ScriptType>();
-                foreach (ScriptType type in values)
+                string clientdir = GlobalPaths.ClientDir;
+                DirectoryInfo dinfo = new DirectoryInfo(clientdir);
+                DirectoryInfo[] Dirs = dinfo.GetDirectories();
+                foreach (DirectoryInfo dir in Dirs)
                 {
-                    Client.ResetScripts(ClientName, type);
+                    string ClientName = dir.Name;
+                    var values = Enum.GetValues(typeof(ScriptType)).Cast<ScriptType>();
+                    foreach (ScriptType type in values)
+                    {
+                        Client.ResetScripts(ClientName, type);
+                    }
                 }
+            }
+            catch(Exception)
+            {
+
             }
         }
 
@@ -531,7 +543,7 @@ namespace NovetusLauncher
                 switch (GlobalVars.Clicks)
                 {
                     case 1:
-                        SplashLabel.Text = "Hi " + GlobalVars.UserConfiguration.ReadSetting("PlayerName") + "!";
+                        SplashLabel.Text = "Hi " + GlobalVars.UserConfiguration.ReadSetting("PlayerName", true) + "!";
                         break;
                     case 3:
                         SplashLabel.Text = "How are you doing today?";
@@ -743,7 +755,7 @@ namespace NovetusLauncher
             PlayerIDTextBox.Text = GlobalVars.UserConfiguration.ReadSetting("UserID");
             PlayerTripcodeLabel.Text = GlobalVars.PlayerTripcode.ToString();
             PlayerLimitBox.Value = ConvertSafe.ToDecimalSafe(GlobalVars.UserConfiguration.ReadSettingInt("PlayerLimit"));
-            PlayerNameTextBox.Text = GlobalVars.UserConfiguration.ReadSetting("PlayerName");
+            PlayerNameTextBox.Text = GlobalVars.UserConfiguration.ReadSetting("PlayerName", true);
             SelectedClientLabel.Text = GlobalVars.UserConfiguration.ReadSetting("SelectedClient");
             ChangeClient();
             SelectedMapLabel.Text = GlobalVars.UserConfiguration.ReadSetting("Map");
@@ -778,13 +790,9 @@ namespace NovetusLauncher
 
         public void ResetConfigValuesInternal()
         {
-            //https://stackoverflow.com/questions/9029351/close-all-open-forms-except-the-main-menu-in-c-sharp
-            List<Form> openForms = new List<Form>();
-
-            foreach (Form f in Application.OpenForms)
-                openForms.Add(f);
-
-            foreach (Form f in openForms)
+            //https://stackoverflow.com/questions/47606993/c-sharp-how-to-detect-opened-forms
+            FormCollection openforms = Application.OpenForms;
+            foreach (Form f in openforms)
             {
                 if (f.GetType() == typeof(NovetusConsole))
                     continue;
@@ -1246,8 +1254,8 @@ namespace NovetusLauncher
 
         public void ChangeName()
         {
-            GlobalVars.UserConfiguration.SaveSetting("PlayerName", PlayerNameTextBox.Text);
-            int autoNameID = GetSpecialNameID(GlobalVars.UserConfiguration.ReadSetting("PlayerName"));
+            GlobalVars.UserConfiguration.SaveSetting("PlayerName", PlayerNameTextBox.Text, true);
+            int autoNameID = GetSpecialNameID(GlobalVars.UserConfiguration.ReadSetting("PlayerName", true));
             if (LocalVars.launcherInitState == false && autoNameID > 0)
             {
                 PlayerIDTextBox.Text = autoNameID.ToString();

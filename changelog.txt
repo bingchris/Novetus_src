@@ -1,3 +1,75 @@
+EDGE Snapshot v26.9772.2
+Enhancements:
+- Enabled the Roblox Asset Delivery API URL support for Online Clothing as well.
+- Re-enabled Roblox Asset Delivery API URL support for the Asset Web Proxy API extension.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9772.1
+NOTES: There are no longer files for .NET 4.0 as Windows XP support has been discontinued.
+Enhancements:
+- Added the Roblox Asset Delivery API URL back in for asset fixing and asset downloading.
+	- The API URL doesn't require the .ROBLOSECURITY cookie.
+	- This is a part of a plan to re-implement Roblox Asset Delivery API support while keeping Roblox account security a high priority.
+Fixes:
+- Fixed the Novetus Bootstrapper bring in the wrong folder.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9723.2
+Enhancements:
+- Updated anti-exploit database.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9723.1
+Fixes:
+- Fixed an issue that prevented Novetus from registering the URI under Wine/Proton.
+- 3 security fixes:
+	- Added validation to URI URLs.
+	- Added proper certificate validation to downloading functions.
+	- When installing mods, Novetus will now ask if you would like to replace files if they exist.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9720.2
+Fixes:
+- Refreshed AES encryption keys.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9720.1
+Enhancements:
+- Removed anti-exploit system wait times in favor of a known database. This improves anti-exploit system effectiveness.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9719.1
+- Added an experimental anti-exploit system to the launcher.
+	- Please report any possible issues regarding client launching if you get a DLL injection error by launching the client. 
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9716.1
+Enhancements:
+- Novetus will now restore system web proxy settings when the web proxy is stopped.
+Fixes:
+- The web proxy will now exit properly when stopping the web proxy.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9714.1
+Fixes:
+- Improved clientinfo file encryption.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9709.1
+Fixes:
+- Fixed a bug where tools can't be equipped through keybinds in 2012M. (fix by KerbalOfficial: https://github.com/Novetus/Novetus_src/pull/139)
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9706.1
+Fixes:
+- Fixed the "RakWrite" security vulnerability in all 2010-2011 clients. Updated the patch for 2012M. 
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9705.1
+Fixes:
+- Fixed the "RakWrite" security vulnerability in 2012M. The 2017L-Studio client doesn't have any "RakWrite"  vulnerabilities.
+---------------------------------------------------------------------------
+EDGE Snapshot v26.9641.1
+Enhancements:
+- Play Solo client launch delays are now based on the place's file size, making the mode support larger places.
+- Client scripts are now completely wiped when closing the Novetus Launcher.
+- The Novetus Console no longer can be closed by itself, but will be closed alongside the launcher. This does not apply if Novetus is in console-only mode.
+- The Novetus Console can now be resized.
+Fixes:
+- Fixed a problem that caused 2011/2012 servers to crash when players on older versions join.
+- Fixed a problem that caused servers to crash involving player names.
+- Improved launcher closing behavior.
+- Fixed "Solo" items not showing up in the revised Play Solo mode.
+---------------------------------------------------------------------------
 EDGE Snapshot v26.9498.2
 Fixes:
 - Reverted the .NET Framework 4.0 changes as it introduced too many issues. Sorry.

@@ -1,18 +1,25 @@
 ﻿#region Usings
-using System;
-using System.IO;
-using System.Diagnostics;
-using System.Threading;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
 using Microsoft.Win32;
-using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Linq;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Cryptography;
+using System.Security.Principal;
+using System.ServiceModel;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TaskbarClock;
 #endregion
 
 namespace Novetus.Core
@@ -22,24 +29,71 @@ namespace Novetus.Core
 	{
 		[DllImport("user32.dll")]
 		static extern int SetWindowText(IntPtr hWnd, string text);
-		public static bool IsElevated { get { return WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid); } }
+        public static bool IsElevated 
+		{ 
+			get 
+			{ 
+                if (Util.IsWineRunning())
+                    return true;
 
-		public static string Decode(string EncodedData, bool useOldDecoding = false)
+                bool isWinXPOr2003 = (Environment.OSVersion.Version.Major == 5 &&
+                    ((Environment.OSVersion.Version.Minor == 1) || (Environment.OSVersion.Version.Minor == 2)));
+
+                if (isWinXPOr2003)
+					return true;
+
+                return WindowsIdentity.GetCurrent().Owner.IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid); 
+			} 
+		}
+
+        public enum OldEncodingMode_t
 		{
-			if (useOldDecoding)
-            {
-				return DecodeOld(EncodedData);
-			}
+			MODE_AES,
+			MODE_BASE64,
+			MODE_DES
+		}
 
-			try
+        public static string Decode(string EncodedData, OldEncodingMode_t iDecodingMode = OldEncodingMode_t.MODE_AES, bool ignoreEncodingMode = true)
+		{
+            if ((iDecodingMode != OldEncodingMode_t.MODE_AES) && !ignoreEncodingMode)
+            {
+                switch (iDecodingMode)
+                {
+                    case OldEncodingMode_t.MODE_BASE64:
+                        return DecodeOld(EncodedData);
+                    case OldEncodingMode_t.MODE_DES:
+                        return EncodedData.DecryptDES();
+                }
+
+                return "";
+            }
+
+            try
 			{
-				string decode = EncodedData.Decrypt();
-				return decode;
+#if KEYSTORE
+                string decode = EncodedData.DecryptAES(GlobalKeyStore.aeskey, GlobalKeyStore.aesiv);
+#else
+				string decode = EncodedData.DecryptAES();
+#endif
+                return decode;
 			}
 			catch (Exception)
 			{
-				return DecodeOld(EncodedData);
-			}
+                if (!ignoreEncodingMode)
+                {
+                    try
+                    {
+                        string decode2 = EncodedData.DecryptDES();
+                        return decode2;
+                    }
+                    catch (Exception)
+                    {
+                        return DecodeOld(EncodedData);
+                    }
+                }
+
+                return "";
+            }
 		}
 
 		private static string DecodeOld(string EncodedData)
@@ -48,18 +102,30 @@ namespace Novetus.Core
 			return System.Text.Encoding.UTF8.GetString(EncodedBytes);
 		}
 
-		public static string Encode(string plainText, bool useOldEncoding = false)
+		public static string Encode(string plainText, OldEncodingMode_t iEncodingMode = OldEncodingMode_t.MODE_AES, bool ignoreEncodingMode = true)
 		{
-			if (useOldEncoding)
+			if ((iEncodingMode != OldEncodingMode_t.MODE_AES) && !ignoreEncodingMode)
 			{
-				var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
-				return System.Convert.ToBase64String(plainTextBytes);
+				switch (iEncodingMode)
+				{
+					case OldEncodingMode_t.MODE_BASE64:
+                        var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(plainText);
+                        return Convert.ToBase64String(plainTextBytes);
+					case OldEncodingMode_t.MODE_DES:
+                        return plainText.CryptDES();
+                }
+
+				return "";
 			}
 			else
 			{
-				return plainText.Crypt();
-			}
-		}
+#if KEYSTORE
+                return plainText.CryptAES(GlobalKeyStore.aeskey, GlobalKeyStore.aesiv);
+#else
+				return plainText.CryptAES();
+#endif
+            }
+        }
 
 		public static string GenerateMD5(string filename)
 		{
@@ -82,7 +148,7 @@ namespace Novetus.Core
 		{
 			if (!GlobalVars.SelectedClientInfo.AlreadyHasSecurity)
 			{
-				int time = 500;
+				int time = 250;
 				BackgroundWorker worker = new BackgroundWorker();
 				worker.WorkerSupportsCancellation = true;
 				worker.DoWork += (obj, e) => WorkerDoWork(exe, type, time, worker, clientname, mapname);
@@ -97,24 +163,66 @@ namespace Novetus.Core
 			worker.Dispose();
 		}
 
+		private static void AEKill(Process exe, ScriptType type, int time, BackgroundWorker worker, string clientname, string mapname)
+		{
+            if (exe.IsRunning())
+            {
+                WorkerKill(exe, type, time, worker, clientname, mapname);
+                exe.Kill();
+                Client.ResetScripts();
+                System.Windows.Forms.MessageBox.Show("Novetus has potentially detected a DLL Injection. If you believe this is in error, report this error. If you actually did inject a DLL, get a job at Arby's.", "Novetus - Security Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private static string[] KnownExploits =
+		{
+            "F889A400B12BBF80627518471A94D5F5",
+            "F6F9F02F7ACD5066DBA9D5F950ED324A",
+            "CF5AED527D97391260C8AF604E0E4F28",
+            "4FD9A2EAE33F9A963B7133242EE9B6BA",
+            "EA8004642467552092B4E0D3BBE0B1B9",
+            "85344DE97163C48B25B0F40C5968B702",
+            "7E5E6F674CCE12ECBE71F5BF9DEEF7D6",
+            "715EDDA409570E07197CBC239F50E1AE",
+            "D5D1D39184B730D0CE5EF97E8E8466D7",
+            "4FD9A2EAE33F9A963B7133242EE9B6BA",
+            "4496FF5FA033053C645B4E15E857A730",
+            "A657C9AD7CA1DB9D98F0BDE09AA4DFAA",
+            "7F9FEC347257464BCA2921B50C87698E",
+            "208DDD5A07143FDD439056B3AB1D15FC",
+            "B11112775D0C59E3A541653FB3BDED52",
+            "86AFDF33BF428797784577B5159D98F7",
+            "9B7B1359C2723F98AF79A8295A6755FA",
+            "C3668D86D012345F0F5E6D97EACB2A51",
+            "690453A3285D8A1549F56D365FFC79DC",
+            "3A0AF3726D550CBB1ADA5A71C1A89302",
+            "A5AC93B72FCDAF33CAB5D949FF84599E",
+            "349178719C6ADFB90676212B40221611",
+            "745F6A5E669F1667C5A4FD494B088908",
+            "6DF9888ED77BA8EA2A78C5DAD5C77F6C",
+            "0071B6A01EB7A6C19229707F286DB169"
+        };
+
 		private static void WorkerDoWork(Process exe, ScriptType type, int time, BackgroundWorker worker, string clientname, string mapname)
 		{
 			//add a smaller delay time so the client can load fully.
 			//based of half the time of the initial ClientLaunchTime.
-			//Ex. due to this, 2012M is 1.5 minutes rather than 1 minute.
+			//Ex. due to this, 2012M can be 1.5 minutes rather than 3 minutes.
 			GlobalVars.ClientLoadDelay = DateTime.Now.AddMinutes(GlobalVars.SelectedClientInfo.ClientLaunchTime * 0.5);
-
-			//int moduleCountOnAppLaunch = exe.Modules.Count;
 
             if (exe.IsRunning())
 			{
-				while (exe.IsRunning())
+                int moduleCountOnAppLaunch = 0;
+
+                while (exe.IsRunning())
 				{
-                    if (!exe.IsRunning())
-                    {
-                        WorkerKill(exe, type, time, worker, clientname, mapname);
-                        return;
-                    }
+					if (!exe.IsRunning())
+					{
+						WorkerKill(exe, type, time, worker, clientname, mapname);
+						return;
+					}
+
+					exe.Refresh();
 
 					if (DateTime.Now > GlobalVars.ClientLoadDelay)
 					{
@@ -125,10 +233,12 @@ namespace Novetus.Core
 						GlobalVars.ClientLoadDelay = DateTime.Now.AddMinutes(GlobalVars.SelectedClientInfo.ClientLaunchTime * 0.5);
 					}
 
-                    switch (type)
+					string windowText = "";
+
+					switch (type)
 					{
 						case ScriptType.Client:
-							SetWindowText(exe.MainWindowHandle, "Novetus "
+							windowText = ("Novetus "
 								+ GlobalVars.ProgramInformation.Version + " - "
 								+ clientname + " "
 								+ Script.Generator.GetNameForType(type)
@@ -137,8 +247,8 @@ namespace Novetus.Core
 							break;
 						case ScriptType.Server:
 						case ScriptType.Solo:
-                        case ScriptType.SoloServer:
-                            SetWindowText(exe.MainWindowHandle, "Novetus "
+						case ScriptType.SoloServer:
+							windowText = ("Novetus "
 								+ GlobalVars.ProgramInformation.Version + " - "
 								+ clientname + " "
 								+ Script.Generator.GetNameForType(type)
@@ -146,32 +256,41 @@ namespace Novetus.Core
 								+ RandomStringTitle());
 							break;
 						case ScriptType.Studio:
-							SetWindowText(exe.MainWindowHandle, "Novetus Studio "
+							windowText = ("Novetus Studio "
 								+ GlobalVars.ProgramInformation.Version + " - "
 								+ clientname
 								+ (string.IsNullOrWhiteSpace(mapname) ? " [Place1]" : " [" + mapname + "]")
 								+ RandomStringTitle());
 							break;
-                        case ScriptType.OutfitView:
-                            SetWindowText(exe.MainWindowHandle, "Novetus Avatar 3D Preview "
-                                + GlobalVars.ProgramInformation.Version + " - "
-                                + clientname + " "
-                                + RandomStringTitle());
-                            break;
-                        default:
-							SetWindowText(exe.MainWindowHandle, Script.Generator.GetNameForType(type)
+						case ScriptType.OutfitView:
+							windowText = ("Novetus Avatar 3D Preview "
+								+ GlobalVars.ProgramInformation.Version + " - "
+								+ clientname + " "
+								+ RandomStringTitle());
+							break;
+						default:
+							windowText = (Script.Generator.GetNameForType(type)
 								+ RandomStringTitle());
 							break;
 					}
 
-                    /*int moduleCount = exe.Modules.Count;
+                    if (type == ScriptType.Client)
+                    {
+                        ProcessModuleCollection modules = exe.Modules;
 
-					if (moduleCount != moduleCountOnAppLaunch && (type != ScriptType.Solo && type != ScriptType.SoloServer))
-					{
-                        WorkerKill(exe, type, time, worker, clientname, mapname);
-                        exe.Close();
-                        return;
-                    }*/
+                        foreach (ProcessModule module in modules)
+                        {
+                            string md5 = GenerateMD5(module.FileName);
+
+                            if (KnownExploits.Contains(md5))
+                            {
+                                AEKill(exe, type, time, worker, clientname, mapname);
+                                return;
+                            }
+                        }
+                    }
+
+                    SetWindowText(exe.MainWindowHandle, windowText);
 
                     Thread.Sleep(time);
 				}
@@ -182,6 +301,83 @@ namespace Novetus.Core
 				RenameWindow(exe, type, clientname, mapname);
 			}
 		}
-	}
+
+		public static string GenArrays()
+		{
+            CryptoRandom random = new CryptoRandom();
+
+            string aeskey = "public static byte[] aeskey = new byte[32] { ";
+
+            for (int i = 1; i < 33; i++)
+            {
+                aeskey += random.Next(0, 255) + ((i == 32) ? "" : ", ");
+            }
+
+            aeskey += " };";
+
+            string aesiv = "public static byte[] aesiv = new byte[16] { ";
+
+            for (int i = 1; i < 17; i++)
+            {
+                aesiv += random.Next(0, 255) + ((i == 16) ? "" : ", ");
+            }
+
+            aesiv += " };";
+
+			return string.Join("\n" , new string[] { aeskey, aesiv });
+		}
+
+        // https://stackoverflow.com/a/32702160
+        public static bool IsValidIP(string address)
+        {
+			if (address.Equals("localhost"))
+				return true;
+
+            IPAddress ip;
+            if (IPAddress.TryParse(address, out ip))
+            {
+                switch (ip.AddressFamily)
+                {
+                    case AddressFamily.InterNetwork:
+                        if (address.Length > 6 && address.Contains("."))
+                        {
+                            string[] s = address.Split('.');
+                            if (s.Length == 4 && s[0].Length > 0 && s[1].Length > 0 && s[2].Length > 0 && s[3].Length > 0)
+                                return true;
+                        }
+                        break;
+                    case AddressFamily.InterNetworkV6:
+                        if (address.Contains(":") && address.Length > 15)
+                            return true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return false;
+        }
+
+		public static bool IsValidPort(string port)
+		{
+            int test;
+            if (!int.TryParse(port, out test))
+			{
+				return false;
+			}
+
+			if (test < 0)
+			{
+                return false;
+            }
+
+            if (test > 65535)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
 	#endregion
 }
